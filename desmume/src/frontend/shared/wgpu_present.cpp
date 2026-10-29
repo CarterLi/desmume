@@ -1091,10 +1091,15 @@ bool WGPUPresent::present(const uint32_t *pixels, int width, int height,
 	wgpuCommandBufferRelease(commandBuffer);
 	wgpuRenderPassEncoderRelease(pass);
 	wgpuCommandEncoderRelease(encoder);
+
+	// Present before dropping the surface texture: wgpu-native needs the
+	// acquired image to still be alive while it hands it to the compositor.
+	const WGPUStatus presentStatus = wgpuSurfacePresent(d.surface);
+
 	wgpuTextureViewRelease(targetView);
 	wgpuTextureRelease(surfaceTexture.texture);
 
-	if (wgpuSurfacePresent(d.surface) != WGPUStatus_Success)
+	if (presentStatus != WGPUStatus_Success)
 	{
 		d.surfaceWidth = 0;
 		d.surfaceHeight = 0;
